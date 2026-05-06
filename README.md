@@ -1,3 +1,4 @@
+![CI](https://github.com/DerMarcl/cd-mcm-exercise-Buchner/actions/workflows/ci.yml/badge.svg)
 # Exercise 2: Microservice Architecture, Docker & GitHub Actions
 
 **Course:** Continuous Delivery in Agile Software Development (Master)
