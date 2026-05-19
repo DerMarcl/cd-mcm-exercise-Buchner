@@ -28,7 +28,7 @@ jobs:
       - name: Run tests with coverage
         run: go test -v -coverprofile=coverage.out ./...
 
-      - name: Check coverage threshold        # ← NEU
+      - name: Check coverage threshold       
         if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.26'
         run: |
           COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | tr -d '%')
@@ -69,7 +69,7 @@ jobs:
           go-version: "1.25"
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@971fd921e4a72b300e0ab2764c40c7a9c25b6c45
+        uses: golangci/golangci-lint-action@v6
         with:
           version: latest
           args: --config .golangci.yml
