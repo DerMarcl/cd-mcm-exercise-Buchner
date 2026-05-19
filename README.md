@@ -24,7 +24,7 @@
 - **golangci-lint configuration** (`.golangci.yml`) -- linter rules
 - **Coverage reporting** -- `go test -coverprofile`
 
----
+----
 
 ## Tasks
 
