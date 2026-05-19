@@ -12,7 +12,6 @@ linters:
     - unused
     - ineffassign
     - gosimple
-    # TODO: Enable additional linters:
     - gofmt
     - gocyclo
     - misspell
