@@ -1,4 +1,6 @@
 # Exercise 3: CI Pipeline -- SonarCloud, Matrix Builds & Linting
+![CI](https://github.com/DerMarcl/cd-mcm-exercise-Buchner/actions/workflows/ci.yml/badge.svg)
+# Exercise 2: Microservice Architecture, Docker & GitHub Actions
 
 **Course:** Continuous Delivery in Agile Software Development (Master)
 **Points:** 24
@@ -23,6 +25,51 @@
 - **SonarCloud configuration** (`sonar-project.properties`) -- static analysis setup
 - **golangci-lint configuration** (`.golangci.yml`) -- linter rules
 - **Coverage reporting** -- `go test -coverprofile`
+- Completed Exercise 1
+- Docker Desktop installed
+- Basic understanding of REST APIs
+
+## Project Overview
+
+The Product Catalog API has been extended with:
+- **PostgreSQL storage** (`internal/store/postgres.go`) -- persistent database backend
+- **Dockerfile** -- multi-stage build for minimal container image
+- **docker-compose.yml** -- orchestrates API + PostgreSQL
+- **GitHub Actions** (`.github/workflows/ci.yml`) -- basic CI pipeline
+
+### Architecture
+
+```
+┌──────────────┐     ┌──────────────┐
+│   Client     │────▶│   API (Go)   │
+│  (curl/HTTP) │     │   Port 8080  │
+└──────────────┘     └──────┬───────┘
+                            │
+                     ┌──────▼───────┐
+                     │  PostgreSQL  │
+                     │  Port 5432   │
+                     └──────────────┘
+```
+
+### Local Development
+
+1. **Fork** this repository on GitHub (click the "Fork" button in the top right corner). **Uncheck** "Copy the `main` branch only" so that all exercise branches are included in your fork.
+2. **Clone** your fork:
+
+```bash
+# Run with in-memory store (no Docker needed)
+go run ./cmd/api
+
+# Run with Docker Compose (API + PostgreSQL)
+docker compose up --build
+
+# Test the API
+curl http://localhost:8080/health
+curl http://localhost:8080/products
+curl -X POST http://localhost:8080/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Widget","price":9.99}'
+```
 
 ---
 
@@ -35,6 +82,7 @@ The CI workflow already has a matrix strategy with one Go version. Your tasks:
 1. **Extend the matrix** to include Go versions `1.25` and `1.26` (see the TODO in `ci.yml`).
 2. **Verify** that the pipeline runs tests for both Go versions in parallel.
 3. **Add an OS matrix dimension** (`ubuntu-latest`, `macos-latest`) so tests run on both platforms.
+### Task 1: Understand the Architecture (2 Points)
 
 **Expected result:** 4 parallel test jobs (2 Go versions x 2 OS).
 
@@ -43,6 +91,7 @@ The CI workflow already has a matrix strategy with one Go version. Your tasks:
 ---
 
 ### Task 2: Linting with golangci-lint (6 Points)
+### Task 2: Complete the GitHub Actions Workflow (6 Points)
 
 1. **Add a `lint` job** to the CI workflow that:
    - Runs `golangci-lint` using the `golangci/golangci-lint-action@v4` action
@@ -62,6 +111,7 @@ The CI workflow already has a matrix strategy with one Go version. Your tasks:
 ---
 
 ### Task 3: SonarCloud Integration (8 Points)
+### Task 3: Docker & Docker Compose (8 Points)
 
 1. **Create a SonarCloud project:**
    - Go to [sonarcloud.io](https://sonarcloud.io) and sign in with GitHub.
@@ -129,6 +179,10 @@ The CI workflow already has a matrix strategy with one Go version. Your tasks:
 | Linting with golangci-lint | 6 |
 | SonarCloud Integration | 8 |
 | Code Coverage Improvement | 6 |
+| Architecture Documentation | 2 |
+| GitHub Actions Workflow | 6 |
+| Docker & Docker Compose | 8 |
+| Handler Tests | 8 |
 | **Total** | **24** |
 
 ## Author
