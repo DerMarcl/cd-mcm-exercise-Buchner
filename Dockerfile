@@ -9,14 +9,12 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o /api-server ./cmd/api
 
-# Runtime stage
-FROM alpine:3.19
-
-RUN apk --no-cache add ca-certificates
+# Runtime stage - distroless
+FROM gcr.io/distroless/static-debian12
 
 WORKDIR /app
 COPY --from=builder /api-server .
 
 EXPOSE 8080
 
-ENTRYPOINT ["./api-server"]
+ENTRYPOINT ["/app/api-server"]
