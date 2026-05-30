@@ -1,4 +1,7 @@
 # Exercise 4: Vulnerability Scanning & Kubernetes Deployment
+# Exercise 3: CI Pipeline -- SonarCloud, Matrix Builds & Linting
+![CI](https://github.com/DerMarcl/cd-mcm-exercise-Buchner/actions/workflows/ci.yml/badge.svg)
+# Exercise 2: Microservice Architecture, Docker & GitHub Actions
 
 **Course:** Continuous Delivery in Agile Software Development (Master)
 **Points:** 24
@@ -24,12 +27,62 @@
 - **Trivy scanning** -- container image vulnerability scanning
 - **Dependency scanning** -- Go module vulnerability checks
 - **Complete CD pipeline** -- from code to running in Kubernetes
+- **Matrix builds** in `.github/workflows/ci.yml` -- test across multiple Go versions
+- **SonarCloud configuration** (`sonar-project.properties`) -- static analysis setup
+- **golangci-lint configuration** (`.golangci.yml`) -- linter rules
+- **Coverage reporting** -- `go test -coverprofile`
+- Completed Exercise 1
+- Docker Desktop installed
+- Basic understanding of REST APIs
+
+## Project Overview
+
+The Product Catalog API has been extended with:
+- **PostgreSQL storage** (`internal/store/postgres.go`) -- persistent database backend
+- **Dockerfile** -- multi-stage build for minimal container image
+- **docker-compose.yml** -- orchestrates API + PostgreSQL
+- **GitHub Actions** (`.github/workflows/ci.yml`) -- basic CI pipeline
+
+### Architecture
+
+```
+┌──────────────┐     ┌──────────────┐
+│   Client     │────▶│   API (Go)   │
+│  (curl/HTTP) │     │   Port 8080  │
+└──────────────┘     └──────┬───────┘
+                            │
+                     ┌──────▼───────┐
+                     │  PostgreSQL  │
+                     │  Port 5432   │
+                     └──────────────┘
+```
+
+### Local Development
+
+1. **Fork** this repository on GitHub (click the "Fork" button in the top right corner). **Uncheck** "Copy the `main` branch only" so that all exercise branches are included in your fork.
+2. **Clone** your fork:
+
+```bash
+# Run with in-memory store (no Docker needed)
+go run ./cmd/api
+
+# Run with Docker Compose (API + PostgreSQL)
+docker compose up --build
+
+# Test the API
+curl http://localhost:8080/health
+curl http://localhost:8080/products
+curl -X POST http://localhost:8080/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Widget","price":9.99}'
+```
 
 ---
 
 ## Tasks
 
 ### Task 1: Vulnerability Scanning -- Docker Image (6 Points)
+### Task 1: Matrix Builds (4 Points)
 
 1. **Build the Docker image locally:**
    ```bash
@@ -45,6 +98,10 @@
    - How many vulnerabilities were found? Categorize by severity (CRITICAL, HIGH, MEDIUM, LOW).
    - Which base image contributes the most vulnerabilities?
    - Can you reduce vulnerabilities by changing the base image? Try switching to `scratch` or `distroless`.
+1. **Extend the matrix** to include Go versions `1.25` and `1.26` (see the TODO in `ci.yml`).
+2. **Verify** that the pipeline runs tests for both Go versions in parallel.
+3. **Add an OS matrix dimension** (`ubuntu-latest`, `macos-latest`) so tests run on both platforms.
+### Task 1: Understand the Architecture (2 Points)
 
 4. **Add a Trivy scan job to the CI pipeline** (see the TODO in `ci.yml`) that:
    - Runs after the `docker-build` job
@@ -71,6 +128,8 @@
    go install golang.org/x/vuln/cmd/govulncheck@latest
    govulncheck ./...
    ```
+### Task 2: Linting with golangci-lint (6 Points)
+### Task 2: Complete the GitHub Actions Workflow (6 Points)
 
 2. **Add a `vulnerability-scan` job to the CI pipeline** (see the TODO in `ci.yml`) that:
    - Runs after the `test` job
@@ -93,6 +152,26 @@
    ```bash
    minikube start
    ```
+### Task 3: SonarCloud Integration (8 Points)
+### Task 3: Docker & Docker Compose (8 Points)
+
+1. **Create a SonarCloud project:**
+   - Go to [sonarcloud.io](https://sonarcloud.io) and sign in with GitHub.
+   - Import your repository as a new project.
+   - Note your `projectKey` and `organization`.
+
+2. **Configure `sonar-project.properties`:**
+   - Replace `YOUR_PROJECT_KEY` and `YOUR_ORGANIZATION` with your actual values.
+   - Ensure coverage reporting is configured correctly.
+
+3. **Add a `sonarcloud` job** to the CI workflow that:
+   - Runs after the `test` job (`needs: test`)
+   - Checks out the code with full history (`fetch-depth: 0`)
+   - Downloads the coverage artifact from the test job
+   - Runs the SonarCloud scan using `SonarSource/sonarqube-scan-action@v5`
+   - Passes the `SONAR_TOKEN` as an environment variable
+
+   > **Hint:** Look at the `sonar-project.properties` file to understand what SonarCloud expects.
 
 2. **Build the image inside Minikube's Docker daemon:**
    ```bash
@@ -181,6 +260,23 @@ kubectl port-forward svc/product-catalog-api 8080:8080 -n product-catalog
 trivy image <image>
 trivy fs .                            # Scan filesystem/dependencies
 ```
+2. **Improve coverage to at least 80%** by adding tests for uncovered code paths. Focus on:
+   - Edge cases in handlers (invalid IDs, malformed JSON)
+   - Error paths in the store layer
+   - The `Validate()` method edge cases
+
+3. **Add a coverage threshold check** to the CI pipeline as a step after running tests:
+   - Extract the total coverage percentage from `go tool cover -func`
+   - Fail the build if coverage is below 80%
+   - Use `::error::` to display the error in the GitHub Actions UI
+
+   > **Hint:** `go tool cover -func=coverage.out | grep total` gives you the total line. Use `awk` and `sed` to extract the number. Use `bc` for the comparison (works on both Linux and macOS).
+
+4. **Upload a coverage HTML report** as a build artifact:
+   - Generate an HTML report using `go tool cover -html`
+   - Upload it using `actions/upload-artifact@v4` so it can be downloaded from the Actions run
+
+**Deliverable:** Coverage report showing >= 80%. Updated tests. Coverage HTML artifact downloadable from the Actions run.
 
 ---
 
@@ -192,8 +288,17 @@ trivy fs .                            # Scan filesystem/dependencies
 | Vulnerability Scanning -- Dependencies | 4 |
 | Kubernetes Deployment with Minikube | 8 |
 | Production Readiness | 6 |
+| Matrix Builds | 4 |
+| Linting with golangci-lint | 6 |
+| SonarCloud Integration | 8 |
+| Code Coverage Improvement | 6 |
+| Architecture Documentation | 2 |
+| GitHub Actions Workflow | 6 |
+| Docker & Docker Compose | 8 |
+| Handler Tests | 8 |
 | **Total** | **24** |
 
 ## Author
 - FH-Prof. Dr. Marc Kurz (marc.kurz@fh-hagenberg.at)
 
+ 
